@@ -33,9 +33,9 @@ nodes = response.data
 
 # queries are composable
 
-uptime = PuppetDB::Query[:>, ['fact', 'uptime_days'], 30]
-redhat = PuppetDB::Query[:'=', ['fact', 'osfamily'], 'RedHat']
-debian = PuppetDB::Query[:'=', ['fact', 'osfamily'], 'Debian']
+uptime = PuppetDB::Query[:>, [:fact, 'uptime_days'], 30]
+redhat = PuppetDB::Query[:'=', [:fact, 'osfamily'], 'RedHat']
+debian = PuppetDB::Query[:'=', [:fact, 'osfamily'], 'Debian']
 
 client.request uptime.and(debian)
 client.request uptime.and(redhat)
@@ -44,7 +44,7 @@ client.request uptime.and(debian.or(redhat))
 
 ## Tests
 
-bundle install
+bundle install  
 bundle exec rspec
 
 ## Authors
