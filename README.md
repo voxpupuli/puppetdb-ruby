@@ -42,14 +42,14 @@ client.request uptime.and(redhat)
 client.request uptime.and(debian.or(redhat))
 ```
 
-## tests
+## Tests
 
 bundle install
 bundle exec rspec
 
 ## Authors
 
-Nathaniel Smith <nathaniel@puppetlabs.com>
+Nathaniel Smith <nathaniel@puppetlabs.com>  
 Lindsey Smith <lindsey@puppetlabs.com>
 
 ## License
