@@ -84,7 +84,7 @@ module PuppetDB
       query = PuppetDB::Query.maybe_promote(query)
       json_query = query.build()
 
-      path = "/" + endpoint
+      path = self.class.base_uri + endpoint
 
       filtered_opts = {'query' => json_query}
       opts.each do |k,v|
