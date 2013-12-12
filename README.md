@@ -15,10 +15,10 @@ require 'puppetdb'
 # Defaults to latest API version.
 
 # non-ssl
-client = PuppetDB::Client({:server => 'http://localhost:8080'})
+client = PuppetDB::Client.new({:server => 'http://localhost:8080'})
 
 # ssl
-client = PuppetDB::Client({
+client = PuppetDB::Client.new({
     :server => 'https://localhost:8081',
     :pem    => {
         :key     => "keyfile",
