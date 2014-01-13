@@ -26,7 +26,8 @@ client = PuppetDB::Client.new({
         'ca_file' => "cafile"
     }})
 
-response = client.request('nodes',
+response = client.request(
+  'nodes',
   [:and,
     [:'=', ['fact', 'kernel'], 'Linux'],
     [:>, ['fact', 'uptime_days'], 30]
