@@ -21,14 +21,19 @@ client = PuppetDB::Client.new({:server => 'http://localhost:8080'})
 client = PuppetDB::Client.new({
     :server => 'https://localhost:8081',
     :pem    => {
-        :key     => "keyfile",
-        :cert    => "certfile",
-        :ca_file => "cafile"
+        'key'     => "keyfile",
+        'cert'    => "certfile",
+        'ca_file' => "cafile"
     }})
 
-response = client.request([:and,
-                 [:'=', ['fact', 'kernel'], 'Linux'],
-                 [:>, ['fact', 'uptime_days'], 30]]], {:limit => 10})
+response = client.request('nodes',
+  [:and,
+    [:'=', ['fact', 'kernel'], 'Linux'],
+    [:>, ['fact', 'uptime_days'], 30]
+  ],
+  {:limit => 10}
+)
+
 nodes = response.data
 
 # queries are composable
