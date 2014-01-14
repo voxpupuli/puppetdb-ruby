@@ -108,13 +108,13 @@ module PuppetDB
       Response.new(ret.parsed_response, total)
     end
 
-    def command(command, payload)
+    def command(command, payload, version = @version)
 
       path = '/commands'
 
       payload = {
         'command' => command,
-        'version' => @version,
+        'version' => version,
         'payload' => payload
       }.to_json
 
