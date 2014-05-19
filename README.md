@@ -50,13 +50,22 @@ client.request uptime.and(debian.or(redhat))
 
 ## Tests
 
-bundle install  
+bundle install
 bundle exec rspec
+
+## Issues & Contributions
+
+File issues or feature requests using [GitHub
+issues](https://github.com/puppetlabs/puppetdb-ruby/issues).
+
+If you are interested in contributing to this project, please see the
+[Contribution Guidelines](CONTRIBUTING.md)
 
 ## Authors
 
-Nathaniel Smith <nathaniel@puppetlabs.com>  
+Nathaniel Smith <nathaniel@puppetlabs.com>
 Lindsey Smith <lindsey@puppetlabs.com>
+Ruth Linehan <ruth@puppetlabs.com>
 
 ## License
 
