@@ -86,7 +86,12 @@ module PuppetDB
 
       path = "/" + endpoint
 
-      filtered_opts = {'query' => json_query}
+      if (json_query != nil.to_json)
+        filtered_opts = {'query' => json_query}
+      else 
+        filtered_opts = { }
+      end
+
       opts.each do |k,v|
         if k == :counts_filter
           filtered_opts['counts-filter'] = JSON.dump(v)

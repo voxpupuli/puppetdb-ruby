@@ -152,6 +152,24 @@ describe 'request' do
     client.request('/foo', [1,2,3])
   end
 
+  it 'works with a nil query' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock()
+    mock_response.expects(:code).returns(200)
+    mock_response.expects(:headers).returns({'X-Records' => 0})
+    mock_response.expects(:parsed_response).returns([])
+    
+    PuppetDB::Client.expects(:get).returns(mock_response).at_least_once.with() do |path, opts|
+      opts == {
+        :query => {}
+      }
+    end
+    
+    client.request('/foo', nil)
+    
+  end
+
   it 'processes options correctly' do
     client = PuppetDB::Client.new(settings)
 
