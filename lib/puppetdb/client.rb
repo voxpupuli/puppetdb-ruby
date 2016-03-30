@@ -60,8 +60,8 @@ module PuppetDB
       end
 
       @use_ssl = scheme == 'https'
-      if @use_ssl
-        unless pem && hash_includes?(pem, 'key', 'cert', 'ca_file')
+      if @use_ssl && pem
+        unless hash_includes?(pem, 'key', 'cert', 'ca_file')
           error_msg = 'Configuration error: https:// specified but pem is missing or incomplete. It requires cert, key, and ca_file.'
           raise error_msg
         end
