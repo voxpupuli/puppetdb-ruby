@@ -94,7 +94,7 @@ module PuppetDB
 
       debug("#{path} #{json_query} #{opts}")
 
-      ret = self.class.get(path, query: filtered_opts)
+      ret = self.class.get(path, body: filtered_opts)
       raise_if_error(ret)
 
       total = ret.headers['X-Records']
