@@ -1,3 +1,6 @@
+Unmaintained: This project is not supported or maintained by Puppet and is
+incompatible with recent versions of PuppetDB.
+
 # puppetdb-ruby
 
 a simple gem for interacting with the
