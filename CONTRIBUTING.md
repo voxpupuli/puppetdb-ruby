@@ -1,46 +1,53 @@
-# How to contribute
+This library has grown over time based on a range of contributions from
+people using it. If you follow these contributing guidelines your patch
+will likely make it into a release a little quicker.
 
-* Make sure you have a [GitHub account](https://github.com/signup/free)
-* Fork the repository on GitHub
 
-## Making Changes
+## Contributing
 
-* Create a topic branch from where you want to base your work (this is almost
-definitely the master branch).
-  * To quickly create a topic branch based on master; `git branch
-    fix/master/my_contribution master` then checkout the new branch with `git
-    checkout fix/master/my_contribution`.
-  * Please avoid working directly on the
-    `master` branch.
-* Make commits of logical units.
-* Check for unnecessary whitespace with `git diff --check` before committing.
-* Make sure your commit messages are in the proper format.
+Please note that this project is released with a Contributor Code of Conduct.
+By participating in this project you agree to abide by its terms. [Contributor
+Code of Conduct](https://voxpupuli.org/coc/).
 
-````
-    Make the example in CONTRIBUTING imperative and concrete
+1. Fork the repo.
 
-    Without this patch applied the example commit message in the CONTRIBUTING
-    document is not a concrete example.  This is a problem because the
-    contributor is left to imagine what the commit message should look like
-    based on a description rather than an example.  This patch fixes the
-    problem by making the example concrete and imperative.
+1. Create a separate branch for your change.
 
-    The first line is a real life imperative statement with a ticket number
-    from our issue tracker.  The body describes the behavior without the patch,
-    why this is a problem, and how the patch fixes the problem when applied.
-````
+1. Run the tests. We only take pull requests with passing tests, and
+   documentation.
 
-* Make sure you have added the necessary tests for your changes.
-* Run _all_ the tests to assure nothing else was accidentally broken.
+1. Add a test for your change. Only refactoring and documentation
+   changes require no new tests. If you are adding functionality
+   or fixing a bug, please add a test.
 
-## Submitting Changes
+1. Squash your commits down into logical components. Make sure to rebase
+   against the current master.
 
-* Sign the [Contributor License Agreement](http://links.puppetlabs.com/cla).
-* Push your changes to a topic branch in your fork of the repository.
-* Submit a pull request to the repository in the puppetlabs organization.
+1. Push the branch to your fork and submit a pull request.
 
-# Additional Resources
+Please be prepared to repeat some of these steps as our contributors review
+your code.
 
-* [Contributor License Agreement](http://links.puppetlabs.com/cla)
-* [General GitHub documentation](http://help.github.com/)
-* [GitHub pull request documentation](http://help.github.com/send-pull-requests/)
+## Dependencies
+
+The testing and development tools have a bunch of dependencies,
+all managed by [bundler](http://bundler.io/) according to the
+[Puppet support matrix](http://docs.puppetlabs.com/guides/platforms.html#ruby-versions).
+
+Install the dependencies like so...
+
+    bundle install
+
+
+## Running the unit tests
+
+The unit test suite covers most of the code, as mentioned above please
+add tests if you're adding new functionality.
+
+To run your all the unit tests
+
+    bundle exec rspec spec
+
+To run a specific spec test
+
+    bundle exec rspec spec/foo_spec.rb
