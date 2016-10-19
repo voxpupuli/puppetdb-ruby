@@ -3,6 +3,9 @@
 a simple gem for interacting with the
 [PuppetDB](https://github.com/puppetlabs/puppetdb) API.
 
+This library was migrated from [puppetlabs](https://github.com/puppetlabs)
+ownership to VoxPupuli on 19 October 2016.
+
 ## Installation
 
 gem install puppetdb-ruby
