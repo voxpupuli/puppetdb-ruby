@@ -56,12 +56,14 @@ bundle exec rspec
 ## Issues & Contributions
 
 File issues or feature requests using [GitHub
-issues](https://github.com/puppetlabs/puppetdb-ruby/issues).
+issues](https://github.com/voxpupuli/puppetdb-ruby/issues).
 
 If you are interested in contributing to this project, please see the
 [Contribution Guidelines](CONTRIBUTING.md)
 
 ## Authors
+
+This module was donated to VoxPupuli by Puppet Inc on 10-19-2016.
 
 Nathaniel Smith <nathaniel@puppetlabs.com>
 Lindsey Smith <lindsey@puppetlabs.com>
