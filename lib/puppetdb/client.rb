@@ -107,5 +107,37 @@ module PuppetDB
 
       Response.new(ret.parsed_response, total)
     end
+
+    def command(command, payload, version = @version)
+
+      path = '/commands'
+
+      payload = {
+        'command' => command,
+        'version' => version,
+        'payload' => payload
+      }.to_json
+
+      debug("#{path} #{payload}")
+
+      ret = self.class.post(
+        path,
+        :body => {'payload' => payload},
+        :options => {
+          :headers => {
+            'Accept'       => 'application/json',
+            'Content-Type' => 'application/x-www-form-urlencoded'
+          }
+        }
+      )
+      raise_if_error(ret)
+
+      total = ret.headers['X-Records']
+      if total.nil?
+        total = ret.parsed_response.length
+      end
+
+      Response.new(ret.parsed_response, total)
+    end
   end
 end
