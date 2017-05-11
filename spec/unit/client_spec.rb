@@ -176,3 +176,32 @@ describe 'request' do
                                                      foo_bar: 'foo')
   end
 end
+
+describe 'command' do
+  settings = { server: 'http://localhost' }
+  command = 'deactivate node'
+  payload = { 'certname' => 'test1', 'producer_timestamp' => '2015-01-01' }
+  payload_version = 3
+
+  it 'processes options correctly' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+    mock_response.expects(:code).returns(200)
+    mock_response.expects(:parsed_response).returns([])
+
+    PuppetDB::Client.expects(:post).returns(mock_response).at_least_once.with do |_path, opts|
+      expect(opts).to eq(query: {
+                           'command' => command,
+                           'version' => payload_version,
+                           'certname' => 'test1'
+                         },
+                         body: payload.to_json,
+                         headers: {
+                           'Accept' => 'application/json',
+                           'Content-Type' => 'application/json'
+                         })
+    end
+    client.command(command, payload, payload_version)
+  end
+end

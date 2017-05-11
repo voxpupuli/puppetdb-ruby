@@ -45,8 +45,9 @@ module PuppetDB
       @logger.debug(msg) if @logger
     end
 
-    def initialize(settings, version = 4)
-      @version = version
+    def initialize(settings, query_api_version = 4, command_api_version = 1)
+      @query_api_version = query_api_version
+      @command_api_version = command_api_version
 
       server = hash_get(settings, 'server')
       pem    = hash_get(settings, 'pem')
@@ -69,7 +70,7 @@ module PuppetDB
         self.class.connection_adapter(FixSSLConnectionAdapter)
       end
 
-      self.class.base_uri(server + '/v' + version.to_s)
+      self.class.base_uri(server)
     end
 
     def raise_if_error(response)
@@ -80,7 +81,7 @@ module PuppetDB
       query = PuppetDB::Query.maybe_promote(query)
       json_query = query.build
 
-      path = '/' + endpoint
+      path = "/pdb/query/v#{@query_api_version}/" + endpoint
 
       filtered_opts = { 'query' => json_query }
       opts.each do |k, v|
@@ -100,6 +101,31 @@ module PuppetDB
       total = ret.parsed_response.length if total.nil?
 
       Response.new(ret.parsed_response, total)
+    end
+
+    def command(command, payload, version)
+      path = "/pdb/cmd/v#{@command_api_version}"
+
+      query = {
+        'command' => command,
+        'version' => version,
+        'certname' => payload['certname']
+      }
+
+      debug("#{path} #{query} #{payload}")
+
+      ret = self.class.post(
+        path,
+        query: query,
+        body: payload.to_json,
+        headers: {
+          'Accept'       => 'application/json',
+          'Content-Type' => 'application/json'
+        }
+      )
+      raise_if_error(ret)
+
+      Response.new(ret.parsed_response)
     end
   end
 end
