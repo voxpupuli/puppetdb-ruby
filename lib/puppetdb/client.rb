@@ -47,7 +47,7 @@ module PuppetDB
       end
     end
 
-    def initialize(settings, version=3)
+    def initialize(settings, version=4)
       @version = version
 
       server = hash_get(settings, 'server')
@@ -80,13 +80,13 @@ module PuppetDB
       end
     end
 
-    def request(endpoint, query, opts={})
+    def request(endpoint, query, opts = {})
       query = PuppetDB::Query.maybe_promote(query)
-      json_query = query.build()
+      json_query = query.build
 
       path = "/" + endpoint
 
-      filtered_opts = {'query' => json_query}
+      filtered_opts = { 'query' => json_query }
       opts.each do |k,v|
         if k == :counts_filter
           filtered_opts['counts-filter'] = JSON.dump(v)
