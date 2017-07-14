@@ -1,24 +1,25 @@
 language: ruby
-rvm:
-  - "2.3.1"
-  - "2.4.1"
-env:
-  - PUPPET_VERSION="~> 4.7.0"
-  - PUPPET_VERSION="~> 4.10.4"
-  - PUPPET_VERSION="~> 5.0.0"
+cache: bundler
+before_install:
+  - bundle -v
+  - rm Gemfile.lock || true
+  - gem update --system
+  - gem update bundler
+  - gem --version
+  - bundle -v
 sudo: false
-addons:
-  apt:
-    packages:
-      - expect
 script:
-  bundle exec rspec
+  'bundle exec $CHECK'
 notifications:
   email: false
 matrix:
-  exclude:
+  include:
     - rvm: 2.3.1
-      env: PUPPET_VERSION="~> 5.0.0"
+      env: CHECK=rspec
+    - rvm: 2.4.1
+      env: CHECK=rspec
+    - rvm: 2.4.1
+      env: CHECK=rubocop
 branches:
   only:
     - master

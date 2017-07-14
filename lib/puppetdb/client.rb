@@ -53,7 +53,7 @@ module PuppetDB
 
       scheme = URI.parse(server).scheme
 
-      unless %w(http https).include? scheme
+      unless %w[http https].include? scheme
         error_msg = 'Configuration error: :server must specify a protocol of either http or https'
         raise error_msg
       end
