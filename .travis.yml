@@ -1,0 +1,29 @@
+language: ruby
+rvm:
+  - "1.9.3"
+  - "2.0.0"
+  - "2.1.9"
+  - "2.3.1"
+  - "2.4.1"
+env:
+  - PUPPET_VERSION="~> 3.8.0"
+  - PUPPET_VERSION="~> 4.0"
+sudo: false
+addons:
+  apt:
+    packages:
+      - expect
+script:
+  bundle exec rspec
+notifications:
+  email: false
+matrix:
+  exclude:
+    - rvm: 2.3.1
+      env: PUPPET_VERSION="~> 3.7.0"
+    - rvm: 2.3.1
+      env: PUPPET_VERSION="~> 3.8.0"
+branches:
+  only:
+    - master
+    - /^v\d/
