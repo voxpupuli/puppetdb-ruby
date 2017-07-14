@@ -2,7 +2,7 @@ require 'httparty'
 require 'logger'
 
 module PuppetDB
-  class APIError < Exception
+  class APIError < RuntimeError
     attr_reader :code, :response
     def initialize(response)
       @response = response
@@ -27,27 +27,25 @@ module PuppetDB
       untouched = hash[key]
       return untouched if untouched
 
-      sym = hash[key.to_sym()]
+      sym = hash[key.to_sym]
       return sym if sym
 
-      str = hash[key.to_s()]
+      str = hash[key.to_s]
       return str if str
 
       nil
     end
 
     def hash_includes?(hash, *sought_keys)
-      sought_keys.each {|x| return false unless hash.include?(x)}
+      sought_keys.each { |x| return false unless hash.include?(x) }
       true
     end
 
     def debug(msg)
-      if @logger
-        @logger.debug(msg)
-      end
+      @logger.debug(msg) if @logger
     end
 
-    def initialize(settings, version=4)
+    def initialize(settings, version = 4)
       @version = version
 
       server = hash_get(settings, 'server')
@@ -55,8 +53,8 @@ module PuppetDB
 
       scheme = URI.parse(server).scheme
 
-      unless ['http', 'https'].include? scheme
-        error_msg = "Configuration error: :server must specify a protocol of either http or https"
+      unless %w(http https).include? scheme
+        error_msg = 'Configuration error: :server must specify a protocol of either http or https'
         raise error_msg
       end
 
@@ -67,43 +65,39 @@ module PuppetDB
           raise error_msg
         end
 
-        self.class.default_options = {:pem => pem}
+        self.class.default_options = { pem: pem }
         self.class.connection_adapter(FixSSLConnectionAdapter)
       end
 
-      self.class.base_uri(server + '/v' + version.to_s())
+      self.class.base_uri(server + '/v' + version.to_s)
     end
 
     def raise_if_error(response)
-      if response.code.to_s() =~ /^[4|5]/
-        raise APIError.new(response)
-      end
+      raise APIError, response if response.code.to_s =~ %r{^[4|5]}
     end
 
     def request(endpoint, query, opts = {})
       query = PuppetDB::Query.maybe_promote(query)
       json_query = query.build
 
-      path = "/" + endpoint
+      path = '/' + endpoint
 
       filtered_opts = { 'query' => json_query }
-      opts.each do |k,v|
+      opts.each do |k, v|
         if k == :counts_filter
           filtered_opts['counts-filter'] = JSON.dump(v)
         else
-          filtered_opts[k.to_s.sub("_", "-")] = v
+          filtered_opts[k.to_s.sub('_', '-')] = v
         end
       end
 
       debug("#{path} #{json_query} #{opts}")
 
-      ret = self.class.get(path, :query => filtered_opts)
+      ret = self.class.get(path, query: filtered_opts)
       raise_if_error(ret)
 
       total = ret.headers['X-Records']
-      if total.nil?
-        total = ret.parsed_response.length
-      end
+      total = ret.parsed_response.length if total.nil?
 
       Response.new(ret.parsed_response, total)
     end

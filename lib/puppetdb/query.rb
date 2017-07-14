@@ -4,7 +4,7 @@ module PuppetDB
   class Query
     attr_reader :sexpr
 
-    def initialize(query=[])
+    def initialize(query = [])
       @sexpr = query
     end
 
@@ -16,7 +16,7 @@ module PuppetDB
       return Query.new(query) unless query.class == Query
       query
     end
-    
+
     def empty?
       @sexpr.empty?
     end
@@ -28,11 +28,11 @@ module PuppetDB
       # of the non-empty operand. If both operands are empty, the
       # empty query is returned. If both operands are non-empty, the
       # compose continues.
-      if query.empty? && !self.empty?
+      if query.empty? && !empty?
         Query.new(@sexpr)
-      elsif self.empty? && !query.empty?
-        Query.new(query.sexpr())
-      elsif self.empty? && query.empty?
+      elsif empty? && !query.empty?
+        Query.new(query.sexpr)
+      elsif empty? && query.empty?
         Query.new([])
       else
         yield query
@@ -40,15 +40,15 @@ module PuppetDB
     end
 
     def and(query)
-      compose(query) { |q| Query.new([:and, @sexpr, q.sexpr()]) }
+      compose(query) { |q| Query.new([:and, @sexpr, q.sexpr]) }
     end
 
     def or(query)
-      compose(query) { |q| Query.new([:or, @sexpr, q.sexpr()]) }
+      compose(query) { |q| Query.new([:or, @sexpr, q.sexpr]) }
     end
 
     def push(query)
-      compose(query) { |q| Query.new(@sexpr.dup.push(q.sexpr())) }
+      compose(query) { |q| Query.new(@sexpr.dup.push(q.sexpr)) }
     end
 
     def build
