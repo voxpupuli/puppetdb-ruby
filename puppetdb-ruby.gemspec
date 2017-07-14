@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.name          = 'puppetdb-ruby'
   s.version       = PuppetDB::VERSION
   s.summary       = 'Simple Ruby client library for PuppetDB API'
-  s.authors       = ['Vox Pupuli']
+  s.authors       = ['Vox Pupuli', 'Nathaniel Smith', 'Lindsey Smith']
   s.email         = 'info@puppetlabs.com'
   s.files         = Dir['CHANGELOG.md', 'README.md', 'LICENSE', 'lib/**/*']
   s.homepage      = 'https://github.com/voxpupuli/puppetdb-ruby'
