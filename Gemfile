@@ -1,8 +1,11 @@
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-gem "httparty"
+gem 'httparty'
 
 group :test do
-  gem 'rspec'
   gem 'mocha'
+  gem 'rake'
+  gem 'rspec'
+  gem 'rubocop', '0.48.1'
+  gem 'rubocop-rspec', '1.15.1'
 end
