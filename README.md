@@ -29,6 +29,8 @@ client = PuppetDB::Client.new({
         'ca_file' => "cafile"
     }})
 
+# Query API
+
 response = client.request(
   'nodes',
   [:and,
@@ -49,6 +51,14 @@ debian = PuppetDB::Query[:'=', [:fact, 'osfamily'], 'Debian']
 client.request uptime.and(debian)
 client.request uptime.and(redhat)
 client.request uptime.and(debian.or(redhat))
+
+# Command API
+
+client.command(
+  'deactivate node',
+  {'certname' => 'test1', 'producer_timestamp' => '2015-01-01'},
+  3
+)
 ```
 
 ## Tests
