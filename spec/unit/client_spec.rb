@@ -79,12 +79,12 @@ describe 'SSL support' do
       expect(r.use_ssl).to eq(true)
     end
 
-    it 'does not tolerate lack of pem' do
+    it 'tolerates lack of pem' do
       settings = {
         server: 'https://localhost:8081'
       }
 
-      -> { PuppetDB::Client.new(settings) }.should raise_error
+      -> { PuppetDB::Client.new(settings) }.should_not raise_error
     end
 
     it 'does not tolerate lack of key' do
@@ -147,7 +147,7 @@ describe 'request' do
     mock_response.expects(:parsed_response).returns([])
 
     PuppetDB::Client.expects(:get).returns(mock_response).at_least_once.with do |_path, opts|
-      opts[:query] == { 'query' => '[1,2,3]' }
+      opts[:body] == { 'query' => '[1,2,3]' }
     end
     client.request('/foo', [1, 2, 3])
   end
@@ -162,7 +162,7 @@ describe 'request' do
 
     PuppetDB::Client.expects(:get).returns(mock_response).at_least_once.with do |_path, opts|
       opts == {
-        query: {
+        body: {
           'query'         => '[1,2,3]',
           'limit'         => 10,
           'counts-filter' => '[4,5,6]',
