@@ -13,4 +13,10 @@ Gem::Specification.new do |s|
   s.license       = 'apache'
   s.require_paths = ['lib']
   s.add_runtime_dependency 'httparty'
+  s.add_development_dependency 'rake'
+  s.add_development_dependency 'rspec'
+  s.add_development_dependency 'mocha'
+  s.add_development_dependency 'rubocop', '0.48.1'
+  s.add_development_dependency 'rubocop-rspec', '1.15.1'
+  s.add_development_dependency 'github_changelog_generator'
 end
