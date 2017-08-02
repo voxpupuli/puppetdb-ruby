@@ -20,10 +20,6 @@ matrix:
       env: CHECK=rspec
     - rvm: 2.4.1
       env: CHECK=rubocop
-branches:
-  only:
-    - master
-    - /^v\d/
 deploy:
   provider: rubygems
   api_key:
