@@ -24,3 +24,11 @@ branches:
   only:
     - master
     - /^v\d/
+deploy:
+  provider: rubygems
+  api_key:
+    secure: PZGZmMVumXc/j3SDH83Q1Fh9ooMHL0Z9vumppxRYoiLXQ+eKsvdw8iDbkNvqV5KTY703WB/PgnfvtmiVqN9Ui/j9P5aw/7ANI9Se41DhIAbimE66HulKHPM4Pm9SsiRowkFh3gwykKE69gEUIlJiuGdLHnPKEw4t8/NBtaVQYz8=
+  gem: puppetdb-ruby
+  on:
+    tags: true
+    repo: voxpupuli/puppetdb-ruby
