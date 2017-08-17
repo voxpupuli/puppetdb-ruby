@@ -1,5 +1,10 @@
 # puppetdb-ruby
 
+[![Build Status](https://img.shields.io/travis/voxpupuli/puppetdb-ruby.svg)](https://travis-ci.org/voxpupuli/puppetdb-ruby)
+[![Gem Version](https://img.shields.io/gem/v/puppetdb-ruby.svg)](https://rubygems.org/gems/puppetdb-ruby)
+[![Gem Downloads](https://img.shields.io/gem/dt/puppetdb-ruby.svg)](https://rubygems.org/gems/puppetdb-ruby)
+[![By VoxPupuli](https://img.shields.io/badge/voxpupuli-%F0%9F%90%B1-orange.svg)](https://voxpupuli.org/)
+
 a simple gem for interacting with the
 [PuppetDB](https://github.com/puppetlabs/puppetdb) API.
 
