@@ -4,8 +4,19 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not impact the functionality of the module.
 
-## [v1.1.0](https://github.com/voxpupuli/puppetdb-ruby/tree/v1.1.0) (2017-08-17)
-[Full Changelog](https://github.com/voxpupuli/puppetdb-ruby/compare/1.0.0...v1.1.0)
+## [v1.1.1](https://github.com/voxpupuli/puppetdb-ruby/tree/v1.1.1) (2017-08-17)
+[Full Changelog](https://github.com/voxpupuli/puppetdb-ruby/compare/1.1.0...v1.1.1)
+
+**Fixed bugs:**
+
+- Rubygem is broken for 1.1.0 [\#31](https://github.com/voxpupuli/puppetdb-ruby/issues/31)
+
+**Merged pull requests:**
+
+- Add badges [\#30](https://github.com/voxpupuli/puppetdb-ruby/pull/30) ([raphink](https://github.com/raphink))
+
+## [1.1.0](https://github.com/voxpupuli/puppetdb-ruby/tree/1.1.0) (2017-08-17)
+[Full Changelog](https://github.com/voxpupuli/puppetdb-ruby/compare/1.0.0...1.1.0)
 
 **Closed issues:**
 
