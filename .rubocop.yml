@@ -12,6 +12,7 @@ AllCops:
     - Gemfile
     - Rakefile
     - Guardfile
+    - puppetdb-ruby.gemspec
 Lint/ConditionPosition:
   Enabled: True
 

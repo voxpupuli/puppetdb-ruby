@@ -175,6 +175,25 @@ describe 'request' do
                                                      counts_filter: [4, 5, 6],
                                                      foo_bar: 'foo')
   end
+
+  it 'supports pql' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+    mock_response.expects(:code).returns(200)
+    mock_response.expects(:headers).returns('X-Records' => 0)
+    mock_response.expects(:parsed_response).returns([])
+
+    PuppetDB::Client.expects(:get).returns(mock_response).at_least_once.with do |_path, opts|
+      opts == {
+        body: {
+          'query'         => 'resources{}'
+        }
+      }
+    end
+
+    client.request('', 'resources{}')
+  end
 end
 
 describe 'command' do

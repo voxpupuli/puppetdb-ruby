@@ -78,10 +78,15 @@ module PuppetDB
     end
 
     def request(endpoint, query, opts = {})
-      query = PuppetDB::Query.maybe_promote(query)
-      json_query = query.build
-
-      path = "/pdb/query/v#{@query_api_version}/" + endpoint
+      path = "/pdb/query/v#{@query_api_version}"
+      if endpoint == ''
+        # PQL
+        json_query = query
+      else
+        path += "/#{endpoint}"
+        query = PuppetDB::Query.maybe_promote(query)
+        json_query = query.build
+      end
 
       filtered_opts = { 'query' => json_query }
       opts.each do |k, v|

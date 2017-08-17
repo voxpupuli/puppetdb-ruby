@@ -50,7 +50,7 @@ client = PuppetDB::Client.new({
 
 The Query Feature allows the user to request data from PuppetDB using the Query endpoints. It defaults to the latest version of the Query Endpoint.
 
-Currently, `puppetdb-ruby` only supports the [AST Query Language](https://docs.puppet.com/puppetdb/5.0/api/query/v4/ast.html). 
+Currently, `puppetdb-ruby` only supports the [AST Query Language](https://docs.puppet.com/puppetdb/5.0/api/query/v4/ast.html).
 
 Support for the [PQL Query Language](https://docs.puppet.com/puppetdb/5.0/api/query/tutorial-pql.html) is planned for a future release.
 
@@ -79,6 +79,25 @@ client.request uptime.and(debian.or(redhat))
 ```
 
 See the [PuppetDB API Docs](https://docs.puppet.com/puppetdb/5.0/api/index.html) for more.
+
+
+#### PQL Queries usage
+
+PQL queries are supported by using the empty endpoint.
+
+Example:
+``` ruby
+response = client.request(
+  '',
+  'resources[title] { nodes { deactivated is null } }',
+  {:limit => 10}
+)
+
+resources = response.data
+```
+
+See the [PuppetDB API Docs](https://docs.puppet.com/puppetdb/5.0/api/query/v4/pql.html) for more on PQL queries.
+
 
 #### Command API Usage
 
