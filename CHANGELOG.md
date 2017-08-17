@@ -4,7 +4,20 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not impact the functionality of the module.
 
-## [v1.0.0](https://github.com/voxpupuli/puppetdb-ruby/tree/v1.0.0) (2017-08-01)
+## [v1.1.0](https://github.com/voxpupuli/puppetdb-ruby/tree/v1.1.0) (2017-08-17)
+[Full Changelog](https://github.com/voxpupuli/puppetdb-ruby/compare/1.0.0...v1.1.0)
+
+**Closed issues:**
+
+- Improve documentation  [\#22](https://github.com/voxpupuli/puppetdb-ruby/issues/22)
+- support for PQL in PuppetDB::Query [\#16](https://github.com/voxpupuli/puppetdb-ruby/issues/16)
+- Any plans to revive this project? [\#12](https://github.com/voxpupuli/puppetdb-ruby/issues/12)
+
+**Merged pull requests:**
+
+- Add PQL support [\#28](https://github.com/voxpupuli/puppetdb-ruby/pull/28) ([raphink](https://github.com/raphink))
+
+## [1.0.0](https://github.com/voxpupuli/puppetdb-ruby/tree/1.0.0) (2017-08-02)
 **Implemented enhancements:**
 
 - Preparatory cleanup for refactor [\#21](https://github.com/voxpupuli/puppetdb-ruby/pull/21) ([dhollinger](https://github.com/dhollinger))
@@ -20,6 +33,10 @@ These should not impact the functionality of the module.
 
 **Merged pull requests:**
 
+- rename gemspec to fix deploy [\#27](https://github.com/voxpupuli/puppetdb-ruby/pull/27) ([dhollinger](https://github.com/dhollinger))
+- Remove branches restriction in travis.yml [\#26](https://github.com/voxpupuli/puppetdb-ruby/pull/26) ([dhollinger](https://github.com/dhollinger))
+- Add rubygems deploy key [\#25](https://github.com/voxpupuli/puppetdb-ruby/pull/25) ([dhollinger](https://github.com/dhollinger))
+- Release 1.0.0 [\#24](https://github.com/voxpupuli/puppetdb-ruby/pull/24) ([dhollinger](https://github.com/dhollinger))
 - Update Docs for Release 1.0.0 [\#23](https://github.com/voxpupuli/puppetdb-ruby/pull/23) ([dhollinger](https://github.com/dhollinger))
 - Add command API support [\#19](https://github.com/voxpupuli/puppetdb-ruby/pull/19) ([bekbulatov](https://github.com/bekbulatov))
 - \(maint\) Transfer ownership to Vox Pupuli [\#18](https://github.com/voxpupuli/puppetdb-ruby/pull/18) ([rlinehan](https://github.com/rlinehan))
