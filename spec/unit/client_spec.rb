@@ -27,14 +27,28 @@ describe 'raise_if_error' do
     response = mock
     response.stubs(:code).returns(400)
 
-    -> { PuppetDB::Client.new(settings).raise_if_error(response) }.should raise_error
+    -> { PuppetDB::Client.new(settings).raise_if_error(response) }.should raise_error(PuppetDB::APIError)
   end
 
   it 'works with 5xx' do
     response = mock
     response.stubs(:code).returns(500)
 
-    -> { PuppetDB::Client.new(settings).raise_if_error(response) }.should raise_error
+    -> { PuppetDB::Client.new(settings).raise_if_error(response) }.should raise_error(PuppetDB::APIError)
+  end
+
+  it 'raises UnauthorizedError with 401' do
+    response = mock
+    response.stubs(:code).returns(401)
+
+    -> { PuppetDB::Client.new(settings).raise_if_error(response) }.should raise_error(PuppetDB::UnauthorizedError)
+  end
+
+  it 'raises ForbiddenError with 403' do
+    response = mock
+    response.stubs(:code).returns(403)
+
+    -> { PuppetDB::Client.new(settings).raise_if_error(response) }.should raise_error(PuppetDB::ForbiddenError)
   end
 
   it 'ignores 2xx' do
@@ -96,7 +110,7 @@ describe 'SSL support' do
         }
       }
 
-      -> { PuppetDB::Client.new(settings) }.should raise_error
+      -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
     end
 
     it 'does not tolerate lack of cert' do
@@ -108,7 +122,7 @@ describe 'SSL support' do
         }
       }
 
-      -> { PuppetDB::Client.new(settings) }.should raise_error
+      -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
     end
 
     it 'does not tolerate lack of ca_file' do
@@ -120,7 +134,7 @@ describe 'SSL support' do
         }
       }
 
-      -> { PuppetDB::Client.new(settings) }.should raise_error
+      -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
     end
   end
 
@@ -130,7 +144,7 @@ describe 'SSL support' do
         'server' => 'localhost:8080'
       }
 
-      -> { PuppetDB::Client.new(settings) }.should raise_error
+      -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
     end
   end
 end
@@ -142,7 +156,7 @@ describe 'request' do
     client = PuppetDB::Client.new(settings)
 
     mock_response = mock
-    mock_response.expects(:code).returns(200)
+    mock_response.expects(:code).at_least_once.returns(200)
     mock_response.expects(:headers).returns('X-Records' => 0)
     mock_response.expects(:parsed_response).returns([])
 
@@ -156,7 +170,7 @@ describe 'request' do
     client = PuppetDB::Client.new(settings)
 
     mock_response = mock
-    mock_response.expects(:code).returns(200)
+    mock_response.expects(:code).at_least_once.returns(200)
     mock_response.expects(:headers).returns('X-Records' => 0)
     mock_response.expects(:parsed_response).returns([])
 
@@ -180,7 +194,7 @@ describe 'request' do
     client = PuppetDB::Client.new(settings)
 
     mock_response = mock
-    mock_response.expects(:code).returns(200)
+    mock_response.expects(:code).at_least_once.returns(200)
     mock_response.expects(:headers).returns('X-Records' => 0)
     mock_response.expects(:parsed_response).returns([])
 
@@ -206,7 +220,7 @@ describe 'command' do
     client = PuppetDB::Client.new(settings)
 
     mock_response = mock
-    mock_response.expects(:code).returns(200)
+    mock_response.expects(:code).at_least_once.returns(200)
     mock_response.expects(:parsed_response).returns([])
 
     PuppetDB::Client.expects(:post).returns(mock_response).at_least_once.with do |_path, opts|

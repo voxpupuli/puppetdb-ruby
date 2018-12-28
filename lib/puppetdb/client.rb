@@ -1,14 +1,9 @@
 require 'httparty'
 require 'logger'
 
-module PuppetDB
-  class APIError < RuntimeError
-    attr_reader :code, :response
-    def initialize(response)
-      @response = response
-    end
-  end
+require 'puppetdb/error'
 
+module PuppetDB
   class FixSSLConnectionAdapter < HTTParty::ConnectionAdapter
     def attach_ssl_certificates(http, options)
       http.cert    = OpenSSL::X509::Certificate.new(File.read(options[:pem]['cert']))
@@ -74,6 +69,8 @@ module PuppetDB
     end
 
     def raise_if_error(response)
+      raise UnauthorizedError, response if response.code == 401
+      raise ForbiddenError, response if response.code == 403
       raise APIError, response if response.code.to_s =~ %r{^[4|5]}
     end
 
