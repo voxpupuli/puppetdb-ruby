@@ -6,9 +6,13 @@ require 'puppetdb/error'
 module PuppetDB
   class FixSSLConnectionAdapter < HTTParty::ConnectionAdapter
     def attach_ssl_certificates(http, options)
-      http.cert    = OpenSSL::X509::Certificate.new(File.read(options[:pem]['cert']))
-      http.key     = OpenSSL::PKey::RSA.new(File.read(options[:pem]['key']))
-      http.ca_file = options[:pem]['ca_file']
+      if options[:pem].empty?
+        http.ca_file = options[:cacert]
+      else
+        http.cert    = OpenSSL::X509::Certificate.new(File.read(options[:pem]['cert']))
+        http.key     = OpenSSL::PKey::RSA.new(File.read(options[:pem]['key']))
+        http.ca_file = options[:pem]['ca_file']
+      end
       http.verify_mode = OpenSSL::SSL::VERIFY_PEER
     end
   end
@@ -17,19 +21,6 @@ module PuppetDB
     include HTTParty
     attr_reader :use_ssl
     attr_writer :logger
-
-    def hash_get(hash, key)
-      untouched = hash[key]
-      return untouched if untouched
-
-      sym = hash[key.to_sym]
-      return sym if sym
-
-      str = hash[key.to_s]
-      return str if str
-
-      nil
-    end
 
     def hash_includes?(hash, *sought_keys)
       sought_keys.each { |x| return false unless hash.include?(x) }
@@ -40,12 +31,14 @@ module PuppetDB
       @logger.debug(msg) if @logger
     end
 
-    def initialize(settings, query_api_version = 4, command_api_version = 1)
+    def initialize(settings = {}, query_api_version = 4, command_api_version = 1)
+      config = Config.new(settings, load_files: true)
       @query_api_version = query_api_version
       @command_api_version = command_api_version
 
-      server = hash_get(settings, 'server')
-      pem    = hash_get(settings, 'pem')
+      server = config.server
+      pem    = config['pem'] || {}
+      token  = config.token
 
       scheme = URI.parse(server).scheme
 
@@ -55,13 +48,14 @@ module PuppetDB
       end
 
       @use_ssl = scheme == 'https'
-      if @use_ssl && pem
-        unless hash_includes?(pem, 'key', 'cert', 'ca_file')
-          error_msg = 'Configuration error: https:// specified but pem is missing or incomplete. It requires cert, key, and ca_file.'
+      if @use_ssl
+        unless pem.empty? || hash_includes?(pem, 'key', 'cert', 'ca_file')
+          error_msg = 'Configuration error: https:// specified with pem, but pem is incomplete. It requires cert, key, and ca_file.'
           raise error_msg
         end
 
-        self.class.default_options = { pem: pem }
+        self.class.default_options = { pem: pem, cacert: config['cacert'] }
+        self.class.headers('X-Authentication' => token) if token
         self.class.connection_adapter(FixSSLConnectionAdapter)
       end
 

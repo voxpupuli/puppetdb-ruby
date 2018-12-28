@@ -136,6 +136,42 @@ describe 'SSL support' do
 
       -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
     end
+
+    context 'when using token auth' do
+      settings = {
+        'server' => 'https://localhost:8081'
+      }
+
+      before do
+        Dir.stubs(:home).returns('/user/root')
+        File.stubs(:readable?).with('/user/root/.puppetlabs/token').returns(true)
+        File.stubs(:read).with('/user/root/.puppetlabs/token').returns('mytoken')
+      end
+
+      it 'does not raise an error when no token or pem is provided' do
+        -> { PuppetDB::Client.new(settings) }.should_not raise_error
+      end
+
+      it 'configures the header with the token' do
+        r = PuppetDB::Client.new(settings)
+        expect(r.class.headers).to include('X-Authentication' => 'mytoken')
+      end
+
+      it 'will set an empty pem' do
+        r = PuppetDB::Client.new(settings)
+        expect(r.class.default_options).to include(pem: {})
+      end
+
+      it 'uses the default cacert path' do
+        r = PuppetDB::Client.new(settings)
+        expect(r.class.default_options).to include(cacert: '/etc/puppetlabs/puppet/ssl/certs/ca.pem')
+      end
+
+      it 'will use a provided cacert path' do
+        r = PuppetDB::Client.new(settings.merge('cacert' => '/my/ca/path'))
+        expect(r.class.default_options).to include(cacert: '/my/ca/path')
+      end
+    end
   end
 
   describe 'when a protocol is missing from config file' do
