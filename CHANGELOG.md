@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not impact the functionality of the module.
 
+## Unreleased
+
+**Implemented enhancements:**
+
+- Add AccessDeniedError, UnauthorizedError and ForbiddenError exceptions
+- Silence warnings about unspecified exception types in spec tests
+- Add support for Puppet Enterprise RBAC token authentication
+- Add support for loading configuration defaults from Puppet Enterprise Client Tools configuration files
+  <https://puppet.com/docs/pe/2018.1/installing_pe_client_tools.html#configuring-and-using-client-tools>
+
 ## [v1.1.1](https://github.com/voxpupuli/puppetdb-ruby/tree/v1.1.1) (2017-08-17)
 [Full Changelog](https://github.com/voxpupuli/puppetdb-ruby/compare/1.1.0...v1.1.1)
 

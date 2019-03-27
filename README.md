@@ -40,7 +40,7 @@ Non-SSL:
 client = PuppetDB::Client.new({:server => 'http://localhost:8080'})
 ```
 
-SSL:
+SSL with cert-based authentication:
 ``` ruby
 client = PuppetDB::Client.new({
     :server => 'https://localhost:8081',
@@ -50,6 +50,24 @@ client = PuppetDB::Client.new({
         'ca_file' => "cafile"
     }})
 ```
+
+SSL with PE RBAC token based authentication:
+``` ruby
+client = PuppetDB::Client.new({
+    :server => "https://localhost:8081",
+    :token  => "my_pe_rbac_token",
+    :cacert => "/path/to/cacert.pem",
+    })
+```
+
+SSL with PE RBAC token based authentication, using all settings from PE Client Tools configurations:
+``` ruby
+client = PuppetDB::Client.new()
+```
+
+Note: When using cert-based authentication you must specify the full pem structure. When using token based authentication
+you must NOT provide the pem structure and instead pass ':token' and ':cacert' (or allow them to be read from the
+PE Client Tools configuration).
 
 #### Query API usage
 
