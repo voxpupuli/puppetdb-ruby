@@ -36,30 +36,29 @@ module PuppetDB
       @query_api_version = query_api_version
       @command_api_version = command_api_version
 
-      server = config.server
+      @servers = config.server_urls
       pem    = config['pem'] || {}
       token  = config.token
 
-      scheme = URI.parse(server).scheme
+      @servers.each do |server|
+        scheme = URI.parse(server).scheme
+        @use_ssl ||= scheme == 'https'
 
-      unless %w[http https].include? scheme
-        error_msg = 'Configuration error: :server must specify a protocol of either http or https'
+        unless %w[http https].include? scheme
+          error_msg = "Configuration error: server_url '#{server}' must specify a protocol of either http or https"
+          raise error_msg
+        end
+      end
+
+      return unless @use_ssl
+      unless pem.empty? || hash_includes?(pem, 'key', 'cert', 'ca_file')
+        error_msg = 'Configuration error: https:// specified with pem, but pem is incomplete. It requires cert, key, and ca_file.'
         raise error_msg
       end
 
-      @use_ssl = scheme == 'https'
-      if @use_ssl
-        unless pem.empty? || hash_includes?(pem, 'key', 'cert', 'ca_file')
-          error_msg = 'Configuration error: https:// specified with pem, but pem is incomplete. It requires cert, key, and ca_file.'
-          raise error_msg
-        end
-
-        self.class.default_options = { pem: pem, cacert: config['cacert'] }
-        self.class.headers('X-Authentication' => token) if token
-        self.class.connection_adapter(FixSSLConnectionAdapter)
-      end
-
-      self.class.base_uri(server)
+      self.class.default_options = { pem: pem, cacert: config['cacert'] }
+      self.class.headers('X-Authentication' => token) if token
+      self.class.connection_adapter(FixSSLConnectionAdapter)
     end
 
     def raise_if_error(response)
@@ -79,6 +78,7 @@ module PuppetDB
         json_query = query.build
       end
 
+      query_mode = opts.delete(:query_mode) || :first
       filtered_opts = { 'query' => json_query }
       opts.each do |k, v|
         if k == :counts_filter
@@ -90,13 +90,33 @@ module PuppetDB
 
       debug("#{path} #{json_query} #{opts}")
 
-      ret = self.class.get(path, body: filtered_opts)
-      raise_if_error(ret)
+      if query_mode == :first
+        self.class.base_uri(@servers.first)
+        ret = self.class.get(path, body: filtered_opts)
+        raise_if_error(ret)
 
-      total = ret.headers['X-Records']
-      total = ret.parsed_response.length if total.nil?
+        total = ret.headers['X-Records']
+        total = ret.parsed_response.length if total.nil?
 
-      Response.new(ret.parsed_response, total)
+        Response.new(ret.parsed_response, total)
+      elsif query_mode == :failover
+
+        @servers.each do |server|
+          self.class.base_uri(server)
+          ret = self.class.get(path, body: filtered_opts)
+          if ret.code < 400
+            total = ret.headers['X-Records']
+            total = ret.parsed_response.length if total.nil?
+
+            return Response.new(ret.parsed_response, total)
+          else
+            debug("query on '#{server}' failed with #{ret.code}")
+          end
+        end
+        raise APIError, 'All queries failed (run again in debug mode to see the reason(s))'
+      else
+        raise ArgumentError, "Query mode '#{query_mode}' is not supported (try :first or :failover)."
+      end
     end
 
     def command(command, payload, version)
@@ -110,6 +130,7 @@ module PuppetDB
 
       debug("#{path} #{query} #{payload}")
 
+      self.class.base_uri(@servers.first)
       ret = self.class.post(
         path,
         query: query,

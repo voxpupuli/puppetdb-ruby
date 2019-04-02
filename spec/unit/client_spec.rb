@@ -244,6 +244,44 @@ describe 'request' do
 
     client.request('', 'resources{}')
   end
+
+  describe 'failover mode' do
+    it 'returns successful result' do
+      client = PuppetDB::Client.new(server_urls: 'http://localhost:8080,http://localhost:8081')
+
+      mock_response = mock
+      mock_response.expects(:code).at_least_once.returns(200)
+      mock_response.expects(:headers).returns('X-Records' => 0)
+      mock_response.expects(:parsed_response).returns([])
+
+      PuppetDB::Client.expects(:get).returns(mock_response).once.with do |_path, opts|
+        opts == {
+          body: {
+            'query'         => 'resources{}'
+          }
+        }
+      end
+
+      client.request('', 'resources{}', query_mode: :failover)
+    end
+
+    it 'throws APIError if all queries fail' do
+      client = PuppetDB::Client.new(server_urls: 'http://localhost:8080,http://localhost:8081')
+
+      mock_response = mock
+      mock_response.expects(:code).at_least_once.returns(400)
+
+      PuppetDB::Client.expects(:get).returns(mock_response).twice.with do |_path, opts|
+        opts == {
+          body: {
+            'query'         => 'resources{}'
+          }
+        }
+      end
+
+      -> { client.request('', 'resources{}', query_mode: :failover) }.should raise_error(PuppetDB::APIError)
+    end
+  end
 end
 
 describe 'command' do

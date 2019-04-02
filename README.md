@@ -60,6 +60,15 @@ client = PuppetDB::Client.new({
     })
 ```
 
+Configure connections to multiple PuppetDB's via `server_urls`
+``` ruby
+client = PuppetDB::Client.new({
+    :server_urls => "https://localhost:8081,https://localhost:8083",
+    :token  => "my_pe_rbac_token",
+    :cacert => "/path/to/cacert.pem",
+    })
+```
+
 SSL with PE RBAC token based authentication, using all settings from PE Client Tools configurations:
 ``` ruby
 client = PuppetDB::Client.new()
@@ -99,6 +108,21 @@ debian = PuppetDB::Query[:'=', [:fact, 'osfamily'], 'Debian']
 client.request uptime.and(debian)
 client.request uptime.and(redhat)
 client.request uptime.and(debian.or(redhat))
+```
+
+If you have configured multiple PuppetDB's via [`server_urls`](https://puppet.com/docs/puppetdb/latest/pdb_client_tools.html#step-3-install-and-configure-the-puppetdb-cli)
+then you can query in `:failover` mode. This will query each PuppetDB in `server_urls`
+in order until it gets a successful response. It will fail with an `APIError` only if all queries fail.
+
+``` ruby
+response = client.request(
+  'nodes',
+  [:"=", "certname", "foo"],
+  {
+    :limit => 10
+    :query_mode => :failover
+  }
+)
 ```
 
 See the [PuppetDB API Docs](https://docs.puppet.com/puppetdb/5.0/api/index.html) for more.

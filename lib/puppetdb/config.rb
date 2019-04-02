@@ -74,6 +74,7 @@ class PuppetDB::Config
 
   def server_urls
     return [config['server']] unless config['server'].nil?
+    return config['server_urls'].split(',') if config['server_urls'].is_a?(String)
     config['server_urls'] || []
   end
 
