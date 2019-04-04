@@ -312,3 +312,49 @@ describe 'command' do
     client.command(command, payload, payload_version)
   end
 end
+
+describe 'status' do
+  settings = { server: 'http://localhost' }
+  two_servers = { server_urls: 'http://localhost:8080,http://localhost:8081' }
+
+  it 'works with one server' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+    mock_response.expects(:code).at_least_once.returns(200)
+    mock_response.expects(:parsed_response).returns(status: 'running')
+
+    PuppetDB::Client.expects(:get).returns(mock_response).once.with do |path, _opts|
+      path == '/status/v1/services'
+    end
+    expect(client.status).to eq('http://localhost' => { status: 'running' })
+  end
+
+  it 'replaces error response with generic message' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+    mock_response.expects(:code).at_least_once.returns(400)
+
+    PuppetDB::Client.expects(:get).returns(mock_response).once.with do |path, _opts|
+      path == '/status/v1/services'
+    end
+    expect(client.status).to eq('http://localhost' => { error: 'Unable to build JSON object from server: http://localhost' })
+  end
+
+  it 'queries and aggregates all server statuses' do
+    client = PuppetDB::Client.new(two_servers)
+
+    mock_response = mock
+    mock_response.expects(:code).at_least_once.returns(200)
+    mock_response.expects(:parsed_response).twice.returns(status: 'running')
+
+    PuppetDB::Client.expects(:get).returns(mock_response).twice.with do |path, _opts|
+      path == '/status/v1/services'
+    end
+    expect(client.status).to eq(
+      'http://localhost:8080' => { status: 'running' },
+      'http://localhost:8081' => { status: 'running' }
+    )
+  end
+end

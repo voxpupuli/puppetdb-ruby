@@ -167,6 +167,43 @@ client.command(
 
 See the PuppetDB [Commands Endpoint Docs](https://docs.puppet.com/puppetdb/5.0/api/command/v1/commands.html) for more information.
 
+#### Query the status endpoint(s)
+
+You can get the status of all configured PuppetDB's by querying the `/status/v1/services` endpoints.
+``` ruby
+client.status
+
+# The result will be of the form (one entry per server)
+# {
+#   "http://localhost:8080": {
+#     "puppetdb-status": {
+#       "service_version": "6.3.1-SNAPSHOT",
+#       "service_status_version": 1,
+#       "detail_level": "info",
+#       "state": "running",
+#       "status": {
+#         "maintenance_mode?": false,
+#         "queue_depth": 0,
+#         "read_db_up?": true,
+#         "write_db_up?": true
+#       },
+#       "active_alerts": [
+#       ]
+#     },
+#     "status-service": {
+#       "service_version": "1.1.0",
+#       "service_status_version": 1,
+#       "detail_level": "info",
+#       "state": "running",
+#       "status": {
+#       },
+#       "active_alerts": [
+#       ]
+#     }
+#   }
+# }
+```
+
 ## Tests
 
 ```

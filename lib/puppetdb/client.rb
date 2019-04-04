@@ -144,5 +144,22 @@ module PuppetDB
 
       Response.new(ret.parsed_response)
     end
+
+    def status
+      status_endpoint = '/status/v1/services'
+      status_map = {}
+
+      @servers.each do |server|
+        self.class.base_uri(server)
+        ret = self.class.get(status_endpoint)
+
+        status_map[server] = if ret.code >= 400
+                               { error: "Unable to build JSON object from server: #{server}" }
+                             else
+                               ret.parsed_response
+                             end
+      end
+      status_map
+    end
   end
 end
