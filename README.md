@@ -204,6 +204,23 @@ client.status
 # }
 ```
 
+#### Export an archive of PuppetDB
+
+You can [`export`](https://puppet.com/docs/puppetdb/5.1/anonymization.html#using-the-export-command) an archive
+of your PuppetDB to a file. Optionally you can override the `anonymization_profile` (default: none).
+
+``` ruby
+client.export('path/for/new_puppetdb_export.tar.gz', anonymization_profile: :high)
+```
+
+#### Import an archive into PuppetDB
+
+Once you have a PuppetDB export, it can be loaded into PuppetDB with [`import`](https://puppet.com/docs/puppetdb/5.1/anonymization.html#using-the-import-command).
+
+``` ruby
+client.import('path/to/existing_puppetdb_export.tar.gz')
+```
+
 ## Tests
 
 ```

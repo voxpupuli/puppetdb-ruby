@@ -1,5 +1,6 @@
 require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 require File.join(File.dirname(__FILE__), '..', '..', 'lib', 'puppetdb')
+require 'tempfile'
 
 def make_mock_response
   m = mock
@@ -356,5 +357,56 @@ describe 'status' do
       'http://localhost:8080' => { status: 'running' },
       'http://localhost:8081' => { status: 'running' }
     )
+  end
+end
+
+describe 'import' do
+  settings = { server: 'http://localhost' }
+
+  it 'send a multipart POST of the tar' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+
+    mock_file = mock
+    File.expects(:open).with('exported_pdb_data.tar.gz').returns(mock_file)
+
+    PuppetDB::Client.expects(:post).returns(mock_response).once.with do |path, opts|
+      path == '/pdb/admin/v1/archive' &&
+        opts[:body][:archive] == mock_file
+    end
+    client.import 'exported_pdb_data.tar.gz'
+  end
+end
+
+describe 'export' do
+  settings = { server: 'http://localhost' }
+
+  it 'streams body to a file' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+    file = Tempfile.new 'export_pdb_data.tar.gz'
+
+    PuppetDB::Client.expects(:get).returns(mock_response).once.with do |path, opts|
+      path == '/pdb/admin/v1/archive' &&
+        opts[:anonymization_profile] = :none &&
+                                       opts[:stream_body] == true
+    end
+    client.export file.path
+  end
+
+  it 'allows customizing the anonymization profile' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+    file = Tempfile.new 'export_pdb_data.tar.gz'
+
+    PuppetDB::Client.expects(:get).returns(mock_response).once.with do |path, opts|
+      path == '/pdb/admin/v1/archive' &&
+        opts[:anonymization_profile] = :full &&
+                                       opts[:stream_body] == true
+    end
+    client.export(file.path, anonymization_profile: :full)
   end
 end

@@ -31,10 +31,11 @@ module PuppetDB
       @logger.debug(msg) if @logger
     end
 
-    def initialize(settings = {}, query_api_version = 4, command_api_version = 1)
+    def initialize(settings = {}, query_api_version = 4, command_api_version = 1, admin_api_version = 1)
       config = Config.new(settings, load_files: true)
       @query_api_version = query_api_version
       @command_api_version = command_api_version
+      @admin_api_version = admin_api_version
 
       @servers = config.server_urls
       pem    = config['pem'] || {}
@@ -143,6 +144,35 @@ module PuppetDB
       raise_if_error(ret)
 
       Response.new(ret.parsed_response)
+    end
+
+    def export(filename, opts = {})
+      self.class.base_uri(@servers.first)
+      path = "/pdb/admin/v#{@admin_api_version}/archive"
+
+      # Allow opts to override anonymization_profile, but enforce
+      # stream_body to avoid using memory
+      params = { anonymization_profile: 'none' }.
+               merge(opts).
+               merge(stream_body: true)
+
+      File.open(filename, 'w') do |file|
+        self.class.get(path, params) do |fragment|
+          if [301, 302].include?(fragment.code)
+            debug 'Skip streaming write for redirect'
+          elsif fragment.code == 200
+            file.write(fragment)
+          else
+            raise StandardError, "Non-success status code while streaming #{fragment.code}"
+          end
+        end
+      end
+    end
+
+    def import(filename)
+      self.class.base_uri(@servers.first)
+      path = "/pdb/admin/v#{@admin_api_version}/archive"
+      self.class.post(path, body: { archive: File.open(filename) })
     end
 
     def status
