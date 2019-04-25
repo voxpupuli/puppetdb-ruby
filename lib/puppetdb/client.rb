@@ -102,6 +102,7 @@ module PuppetDB
         Response.new(ret.parsed_response, total)
       elsif query_mode == :failover
 
+        ret=nil
         @servers.each do |server|
           self.class.base_uri(server)
           ret = self.class.get(path, body: filtered_opts)
@@ -114,7 +115,7 @@ module PuppetDB
             debug("query on '#{server}' failed with #{ret.code}")
           end
         end
-        raise APIError, 'All queries failed (run again in debug mode to see the reason(s))'
+        raise APIError, ret
       else
         raise ArgumentError, "Query mode '#{query_mode}' is not supported (try :first or :failover)."
       end
