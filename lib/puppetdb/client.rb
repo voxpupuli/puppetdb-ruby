@@ -6,13 +6,10 @@ require 'puppetdb/error'
 module PuppetDB
   class FixSSLConnectionAdapter < HTTParty::ConnectionAdapter
     def attach_ssl_certificates(http, options)
-      if options[:pem].empty?
-        http.ca_file = options[:cacert]
-      else
-        http.cert    = OpenSSL::X509::Certificate.new(File.read(options[:pem]['cert']))
-        http.key     = OpenSSL::PKey::RSA.new(File.read(options[:pem]['key']))
-        http.ca_file = options[:pem]['ca_file']
-      end
+      http.ca_file = options[:cacert]
+      http.cert    = OpenSSL::X509::Certificate.new(File.read(options[:cert])) if options[:cert]
+      http.key     = OpenSSL::PKey::RSA.new(File.read(options[:key])) if options[:key]
+
       http.verify_mode = OpenSSL::SSL::VERIFY_PEER
     end
   end
@@ -38,7 +35,7 @@ module PuppetDB
       @admin_api_version = admin_api_version
 
       @servers = config.server_urls
-      pem    = config['pem'] || {}
+      pem    = config.pem
       token  = config.token
 
       @servers.each do |server|
@@ -52,12 +49,12 @@ module PuppetDB
       end
 
       return unless @use_ssl
-      unless pem.empty? || hash_includes?(pem, 'key', 'cert', 'ca_file')
-        error_msg = 'Configuration error: https:// specified with pem, but pem is incomplete. It requires cert, key, and ca_file.'
+      unless hash_includes?(pem, :cacert, :cert, :key) || (pem[:cert].nil? && pem[:key].nil?)
+        error_msg = 'Configuration error: https:// specified, but configuration is incomplete. It requires cacert and either cert and key, or a valid token.'
         raise error_msg
       end
 
-      self.class.default_options = { pem: pem, cacert: config['cacert'] }
+      self.class.default_options = pem
       self.class.headers('X-Authentication' => token) if token
       self.class.connection_adapter(FixSSLConnectionAdapter)
     end
@@ -107,7 +104,7 @@ module PuppetDB
         Response.new(ret.parsed_response, total)
       elsif query_mode == :failover
 
-        ret=nil
+        ret = nil
         @servers.each do |server|
           self.class.base_uri(server)
           ret = self.class.get(path, body: filtered_opts)

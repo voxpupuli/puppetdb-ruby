@@ -43,18 +43,17 @@ client = PuppetDB::Client.new({:server => 'http://localhost:8080'})
 SSL with cert-based authentication:
 ``` ruby
 client = PuppetDB::Client.new({
-    :server => 'https://localhost:8081',
-    :pem    => {
-        'key'     => "keyfile",
-        'cert'    => "certfile",
-        'ca_file' => "cafile"
-    }})
+    server_urls: 'https://localhost:8081',
+    cacert: '/path/to/ca.pem'
+    cert: '/path/to/certfile.pem',
+    key: '/path/to/keyfile.pem'
+    })
 ```
 
 SSL with PE RBAC token based authentication:
 ``` ruby
 client = PuppetDB::Client.new({
-    :server => "https://localhost:8081",
+    :server_urls => "https://localhost:8081",
     :token  => "my_pe_rbac_token",
     :cacert => "/path/to/cacert.pem",
     })

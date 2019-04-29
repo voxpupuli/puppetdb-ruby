@@ -22,7 +22,7 @@ def expect_include_total(mock_query)
 end
 
 describe 'raise_if_error' do
-  settings = { 'server' => 'http://localhost:8080' }
+  settings = { server_urls: ['http://localhost:8080'] }
 
   it 'works with 4xx' do
     response = mock
@@ -71,7 +71,7 @@ describe 'SSL support' do
   describe 'when http:// is specified' do
     it 'does not use ssl' do
       settings = {
-        'server' => 'http://localhost:8080'
+        server_urls: 'http://localhost:8080'
       }
 
       r = PuppetDB::Client.new(settings)
@@ -82,12 +82,10 @@ describe 'SSL support' do
   describe 'when https:// is specified' do
     it 'uses ssl' do
       settings = {
-        'server' => 'https://localhost:8081',
-        'pem' => {
-          'cert'    => 'foo',
-          'key'     => 'bar',
-          'ca_file' => 'baz'
-        }
+        server_urls: ['https://localhost:8081'],
+        cacert: 'baz',
+        cert: 'foo',
+        key: 'bar'
       }
 
       r = PuppetDB::Client.new(settings)
@@ -96,7 +94,7 @@ describe 'SSL support' do
 
     it 'tolerates lack of pem' do
       settings = {
-        server: 'https://localhost:8081'
+        server_urls: 'https://localhost:8081'
       }
 
       -> { PuppetDB::Client.new(settings) }.should_not raise_error
@@ -104,11 +102,9 @@ describe 'SSL support' do
 
     it 'does not tolerate lack of key' do
       settings = {
-        'server' => 'https://localhost:8081',
-        'pem'    => {
-          'cert' => 'foo',
-          'ca_file' => 'bar'
-        }
+        server_urls: ['https://localhost:8081'],
+        cacert: 'baz',
+        cert: 'foo'
       }
 
       -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
@@ -116,31 +112,27 @@ describe 'SSL support' do
 
     it 'does not tolerate lack of cert' do
       settings = {
-        'server' => 'https://localhost:8081',
-        'pem'    => {
-          'key' => 'foo',
-          'ca_file' => 'bar'
-        }
+        server_urls: ['https://localhost:8081'],
+        cacert: 'baz',
+        key: 'bar'
       }
 
       -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
     end
 
-    it 'does not tolerate lack of ca_file' do
+    it 'tolerates lack of cacert' do
       settings = {
-        'server' => 'https://localhost:8081',
-        'pem'    => {
-          'key' => 'foo',
-          'cert' => 'bar'
-        }
+        server_urls: ['https://localhost:8081'],
+        cert: 'foo',
+        key: 'bar'
       }
 
-      -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
+      -> { PuppetDB::Client.new(settings) }.should_not raise_error(RuntimeError)
     end
 
     context 'when using token auth' do
       settings = {
-        'server' => 'https://localhost:8081'
+        server_urls: ['https://localhost:8081']
       }
 
       before do
@@ -160,18 +152,13 @@ describe 'SSL support' do
         expect(r.class.headers).to include('X-Authentication' => 'mytoken')
       end
 
-      it 'will set an empty pem' do
-        r = PuppetDB::Client.new(settings)
-        expect(r.class.default_options).to include(pem: {})
-      end
-
       it 'uses the default cacert path' do
         r = PuppetDB::Client.new(settings)
         expect(r.class.default_options).to include(cacert: '/etc/puppetlabs/puppet/ssl/certs/ca.pem')
       end
 
       it 'will use a provided cacert path' do
-        r = PuppetDB::Client.new(settings.merge('cacert' => '/my/ca/path'))
+        r = PuppetDB::Client.new(settings.merge(cacert: '/my/ca/path'))
         expect(r.class.default_options).to include(cacert: '/my/ca/path')
       end
     end
@@ -180,7 +167,7 @@ describe 'SSL support' do
   describe 'when a protocol is missing from config file' do
     it 'raises an exception' do
       settings = {
-        'server' => 'localhost:8080'
+        server_urls: ['localhost:8080']
       }
 
       -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
@@ -189,7 +176,7 @@ describe 'SSL support' do
 end
 
 describe 'request' do
-  settings = { server: 'http://localhost' }
+  settings = { server_urls: ['http://localhost'] }
 
   it 'works with array instead of Query' do
     client = PuppetDB::Client.new(settings)
@@ -317,7 +304,7 @@ describe 'command' do
 end
 
 describe 'status' do
-  settings = { server: 'http://localhost' }
+  settings = { server_urls: 'http://localhost' }
   two_servers = { server_urls: 'http://localhost:8080,http://localhost:8081' }
 
   it 'works with one server' do
