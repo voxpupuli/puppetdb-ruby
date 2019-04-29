@@ -9,7 +9,7 @@ class PuppetDB::Config
   end
 
   def load_file(path)
-    File.open(path) { |f| JSON.parse(f.read, symbolize_names: true) }
+    File.open(path) { |f| JSON.parse(f.read, symbolize_names: true)[:puppetdb] }
   end
 
   def puppetlabs_root
