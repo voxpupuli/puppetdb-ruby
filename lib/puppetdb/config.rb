@@ -15,7 +15,14 @@ class PuppetDB::Config
   end
 
   def load_file(path)
-    File.open(path) { |f| JSON.parse(f.read, symbolize_names: true)[:puppetdb] }
+    loaded_conf = File.open(path) { |f| JSON.parse(f.read, symbolize_names: true)[:puppetdb] }
+
+    # Munge token-file into token_file for better readability in Ruby
+    if loaded_conf[:'token-file']
+      loaded_conf[:token_file] = loaded_conf.delete(:'token-file')
+    end
+
+    loaded_conf
   end
 
   def puppetlabs_root
