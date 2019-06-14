@@ -127,7 +127,7 @@ describe 'SSL support' do
         key: 'bar'
       }
 
-      -> { PuppetDB::Client.new(settings) }.should_not raise_error(RuntimeError)
+      -> { PuppetDB::Client.new(settings) }.should_not raise_error
     end
 
     context 'when using token auth' do

@@ -112,7 +112,7 @@ describe 'SSL support' do
         cert: 'bar'
       }
 
-      -> { PuppetDB::Client.new(settings) }.should_not raise_error(RuntimeError)
+      -> { PuppetDB::Client.new(settings) }.should_not raise_error
     end
   end
 
