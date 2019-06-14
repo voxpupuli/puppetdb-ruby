@@ -1,4 +1,5 @@
 require 'json'
+require 'rbconfig'
 
 class PuppetDB::Config
   def initialize(overrides = nil, load_files = false)
@@ -8,12 +9,21 @@ class PuppetDB::Config
     @load_files = load_files
   end
 
+  def windows?
+    @is_windows ||= (RbConfig::CONFIG['host_os'] =~ %r{mswin|mingw|cygwin})
+    @is_windows
+  end
+
   def load_file(path)
     File.open(path) { |f| JSON.parse(f.read, symbolize_names: true)[:puppetdb] }
   end
 
   def puppetlabs_root
-    '/etc/puppetlabs'
+    if windows?
+      'C:\ProgramData\PuppetLabs'
+    else
+      '/etc/puppetlabs'
+    end
   end
 
   def global_conf
@@ -29,7 +39,7 @@ class PuppetDB::Config
   end
 
   def default_cacert
-    "#{puppetlabs_root}/puppet/ssl/certs/ca.pem"
+    File.join(puppetlabs_root, 'puppet', 'ssl', 'certs', 'ca.pem')
   end
 
   def defaults
