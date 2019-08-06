@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.email         = 'voxpupuli@groups.io'
   s.files         = Dir['CHANGELOG.md', 'README.md', 'LICENSE', 'lib/**/*']
   s.homepage      = 'https://github.com/voxpupuli/puppetdb-ruby'
-  s.license       = 'apache'
+  s.license       = 'Apache-2.0'
   s.require_paths = ['lib']
   s.add_runtime_dependency 'httparty'
   s.add_development_dependency 'rake'
