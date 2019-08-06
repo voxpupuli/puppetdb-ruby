@@ -4,18 +4,21 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not impact the functionality of the module.
 
-## Unreleased
+## [1.2.0](https://github.com/voxpupuli/puppetdb-ruby/tree/1.2.0) (2019-08-06)
+[Full Changelog](https://github.com/voxpupuli/puppetdb-ruby/compare/1.1.1...1.2.0)
 
 **Implemented enhancements:**
 
-- Add AccessDeniedError, UnauthorizedError and ForbiddenError exceptions
-- Silence warnings about unspecified exception types in spec tests
-- Add support for Puppet Enterprise RBAC token authentication
-- Add support for loading configuration defaults from Puppet Enterprise Client Tools configuration files
-  <https://puppet.com/docs/pe/2018.1/installing_pe_client_tools.html#configuring-and-using-client-tools>
+- Add PE RBAC token support [\#34](https://github.com/voxpupuli/puppetdb-ruby/pull/34) ([seanmil](https://github.com/seanmil))
 
-## [v1.1.1](https://github.com/voxpupuli/puppetdb-ruby/tree/v1.1.1) (2017-08-17)
-[Full Changelog](https://github.com/voxpupuli/puppetdb-ruby/compare/1.1.0...v1.1.1)
+**Closed issues:**
+
+- cannot load such file -- puppetdb [\#33](https://github.com/voxpupuli/puppetdb-ruby/issues/33)
+- Attempting to use puppetdb-ruby in a custom function [\#11](https://github.com/voxpupuli/puppetdb-ruby/issues/11)
+- No way to retrieve all facts/nodes [\#8](https://github.com/voxpupuli/puppetdb-ruby/issues/8)
+
+## [1.1.1](https://github.com/voxpupuli/puppetdb-ruby/tree/1.1.1) (2017-08-17)
+[Full Changelog](https://github.com/voxpupuli/puppetdb-ruby/compare/1.1.0...1.1.1)
 
 **Fixed bugs:**
 
