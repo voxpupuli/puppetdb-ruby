@@ -151,13 +151,11 @@ module PuppetDB
 
     def export(filename, opts = {})
       self.class.base_uri(@servers.first)
-      path = "/pdb/admin/v#{@admin_api_version}/archive"
+      anonymization_profile = opts.delete(:anonymization_profile) || 'none'
+      path = "/pdb/admin/v#{@admin_api_version}/archive?anonymization_profile=#{anonymization_profile}"
 
-      # Allow opts to override anonymization_profile, but enforce
-      # stream_body to avoid using memory
-      params = { anonymization_profile: 'none' }.
-               merge(opts).
-               merge(stream_body: true)
+      # Enforce stream_body to avoid using memory
+      params = opts.merge(stream_body: true)
 
       File.open(filename, 'w') do |file|
         self.class.get(path, params) do |fragment|
