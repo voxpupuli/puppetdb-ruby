@@ -69,13 +69,9 @@ Note: When using cert-based authentication you must specify the full pem structu
 you must NOT provide the pem structure and instead pass ':token' and ':cacert' (or allow them to be read from the
 PE Client Tools configuration).
 
-#### Query API usage
+#### AST Query usage
 
 The Query Feature allows the user to request data from PuppetDB using the Query endpoints. It defaults to the latest version of the Query Endpoint.
-
-Currently, `puppetdb-ruby` only supports the [AST Query Language](https://docs.puppet.com/puppetdb/5.0/api/query/v4/ast.html).
-
-Support for the [PQL Query Language](https://docs.puppet.com/puppetdb/5.0/api/query/tutorial-pql.html) is planned for a future release.
 
 Example:
 ``` ruby
@@ -101,7 +97,7 @@ client.request uptime.and(redhat)
 client.request uptime.and(debian.or(redhat))
 ```
 
-See the [PuppetDB API Docs](https://docs.puppet.com/puppetdb/5.0/api/index.html) for more.
+See the [PuppetDB API Docs](https://puppet.com/docs/puppetdb/latest/api/query/v4/ast.html) for more about the AST based query language.
 
 
 #### PQL Queries usage
@@ -119,7 +115,7 @@ response = client.request(
 resources = response.data
 ```
 
-See the [PuppetDB API Docs](https://docs.puppet.com/puppetdb/5.0/api/query/v4/pql.html) for more on PQL queries.
+See the [PuppetDB API Docs](https://puppet.com/docs/puppetdb/latest/api/query/tutorial-pql.html) for more on PQL queries.
 
 
 #### Command API Usage
@@ -141,7 +137,7 @@ client.command(
 )
 ```
 
-See the PuppetDB [Commands Endpoint Docs](https://docs.puppet.com/puppetdb/5.0/api/command/v1/commands.html) for more information.
+See the PuppetDB [Commands Endpoint Docs](https://puppet.com/docs/puppetdb/latest/api/command/v1/commands.html) for more information.
 
 ## Tests
 
