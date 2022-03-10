@@ -144,6 +144,8 @@ describe 'SSL support' do
 
       before do
         Dir.stubs(:home).returns('/user/root')
+        File.stubs(:readable?).with('/etc/puppetlabs/client-tools/puppetdb.conf').returns(false)
+        File.stubs(:readable?).with('/user/root/.puppetlabs/client-tools/puppetdb.conf').returns(false)
         File.stubs(:readable?).with('/user/root/.puppetlabs/token').returns(true)
         File.stubs(:read).with('/user/root/.puppetlabs/token').returns('mytoken')
       end
