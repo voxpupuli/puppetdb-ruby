@@ -144,6 +144,8 @@ describe 'SSL support' do
 
       before do
         Dir.stubs(:home).returns('/user/root')
+        File.stubs(:readable?).with('/etc/puppetlabs/client-tools/puppetdb.conf').returns(false)
+        File.stubs(:readable?).with('/user/root/.puppetlabs/client-tools/puppetdb.conf').returns(false)
         File.stubs(:readable?).with('/user/root/.puppetlabs/token').returns(true)
         File.stubs(:read).with('/user/root/.puppetlabs/token').returns('mytoken')
       end
@@ -215,8 +217,8 @@ describe 'request' do
         body: {
           'query'         => '[1,2,3]',
           'limit'         => 10,
-          'counts-filter' => '[4,5,6]',
-          'foo-bar'       => 'foo'
+          'counts_filter' => '[4,5,6]',
+          'foo_bar'       => 'foo'
         }
       }
     end

@@ -79,16 +79,21 @@ module PuppetDB
         json_query = query.build
       end
 
-      filtered_opts = { 'query' => json_query }
+      filtered_opts = {}
       opts.each do |k, v|
-        if k == :counts_filter
-          filtered_opts['counts-filter'] = JSON.dump(v)
-        else
-          filtered_opts[k.to_s.sub('_', '-')] = v
-        end
+        key = k.to_s
+        # Per https://puppet.com/docs/puppetdb/7/api/query/v4/upgrading-from-v3.html#changes-affecting-all-endpoints
+        # all query params will use _ in APIv4
+        key.sub!('_', '-') if @query_api_version < 4
+
+        # PuppetDB expects JSON-encoded data for parameters with
+        # structured data:
+        value = (v.is_a?(Array) || v.is_a?(Hash)) ? JSON.dump(v) : v
+        filtered_opts[key] = value
       end
 
-      debug("#{path} #{json_query} #{opts}")
+      debug("#{path} #{json_query} #{filtered_opts}")
+      filtered_opts['query'] = json_query
 
       ret = self.class.get(path, body: filtered_opts)
       raise_if_error(ret)
