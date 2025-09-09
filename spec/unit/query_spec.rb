@@ -165,8 +165,8 @@ describe 'request' do
         body: {
           'query'         => '[1,2,3]',
           'limit'         => 10,
-          'counts-filter' => '[4,5,6]',
-          'foo-bar'       => 'foo'
+          'counts_filter' => '[4,5,6]',
+          'foo_bar'       => 'foo'
         }
       }
     end
