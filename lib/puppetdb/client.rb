@@ -6,13 +6,10 @@ require 'puppetdb/error'
 module PuppetDB
   class FixSSLConnectionAdapter < HTTParty::ConnectionAdapter
     def attach_ssl_certificates(http, options)
-      if options[:pem].empty?
-        http.ca_file = options[:cacert]
-      else
-        http.cert    = OpenSSL::X509::Certificate.new(File.read(options[:pem]['cert']))
-        http.key     = OpenSSL::PKey::RSA.new(File.read(options[:pem]['key']))
-        http.ca_file = options[:pem]['ca_file']
-      end
+      http.ca_file = options[:cacert]
+      http.cert    = OpenSSL::X509::Certificate.new(File.read(options[:cert])) if options[:cert]
+      http.key     = OpenSSL::PKey::RSA.new(File.read(options[:key])) if options[:key]
+
       http.verify_mode = OpenSSL::SSL::VERIFY_PEER
     end
   end
@@ -31,35 +28,35 @@ module PuppetDB
       @logger.debug(msg) if @logger
     end
 
-    def initialize(settings = {}, query_api_version = 4, command_api_version = 1)
+    def initialize(settings = {}, query_api_version = 4, command_api_version = 1, admin_api_version = 1)
       config = Config.new(settings, load_files: true)
       @query_api_version = query_api_version
       @command_api_version = command_api_version
+      @admin_api_version = admin_api_version
 
-      server = config.server
-      pem    = config['pem'] || {}
+      @servers = config.server_urls
+      pem    = config.pem
       token  = config.token
 
-      scheme = URI.parse(server).scheme
+      @servers.each do |server|
+        scheme = URI.parse(server).scheme
+        @use_ssl ||= scheme == 'https'
 
-      unless %w[http https].include? scheme
-        error_msg = 'Configuration error: :server must specify a protocol of either http or https'
+        unless %w[http https].include? scheme
+          error_msg = "Configuration error: server_url '#{server}' must specify a protocol of either http or https"
+          raise error_msg
+        end
+      end
+
+      return unless @use_ssl
+      unless hash_includes?(pem, :cacert, :cert, :key) || (pem[:cert].nil? && pem[:key].nil?)
+        error_msg = 'Configuration error: https:// specified, but configuration is incomplete. It requires cacert and either cert and key, or a valid token.'
         raise error_msg
       end
 
-      @use_ssl = scheme == 'https'
-      if @use_ssl
-        unless pem.empty? || hash_includes?(pem, 'key', 'cert', 'ca_file')
-          error_msg = 'Configuration error: https:// specified with pem, but pem is incomplete. It requires cert, key, and ca_file.'
-          raise error_msg
-        end
-
-        self.class.default_options = { pem: pem, cacert: config['cacert'] }
-        self.class.headers('X-Authentication' => token) if token
-        self.class.connection_adapter(FixSSLConnectionAdapter)
-      end
-
-      self.class.base_uri(server)
+      self.class.default_options = pem
+      self.class.headers('X-Authentication' => token) if token
+      self.class.connection_adapter(FixSSLConnectionAdapter)
     end
 
     def raise_if_error(response)
@@ -79,6 +76,7 @@ module PuppetDB
         json_query = query.build
       end
 
+      query_mode = opts.delete(:query_mode) || :first
       filtered_opts = {}
       opts.each do |k, v|
         key = k.to_s
@@ -95,13 +93,34 @@ module PuppetDB
       debug("#{path} #{json_query} #{filtered_opts}")
       filtered_opts['query'] = json_query
 
-      ret = self.class.get(path, body: filtered_opts)
-      raise_if_error(ret)
+      if query_mode == :first
+        self.class.base_uri(@servers.first)
+        ret = self.class.get(path, body: filtered_opts)
+        raise_if_error(ret)
 
-      total = ret.headers['X-Records']
-      total = ret.parsed_response.length if total.nil?
+        total = ret.headers['X-Records']
+        total = ret.parsed_response.length if total.nil?
 
-      Response.new(ret.parsed_response, total)
+        Response.new(ret.parsed_response, total)
+      elsif query_mode == :failover
+
+        ret = nil
+        @servers.each do |server|
+          self.class.base_uri(server)
+          ret = self.class.get(path, body: filtered_opts)
+          if ret.code < 400
+            total = ret.headers['X-Records']
+            total = ret.parsed_response.length if total.nil?
+
+            return Response.new(ret.parsed_response, total)
+          else
+            debug("query on '#{server}' failed with #{ret.code}")
+          end
+        end
+        raise APIError, ret
+      else
+        raise ArgumentError, "Query mode '#{query_mode}' is not supported (try :first or :failover)."
+      end
     end
 
     def command(command, payload, version)
@@ -115,6 +134,7 @@ module PuppetDB
 
       debug("#{path} #{query} #{payload}")
 
+      self.class.base_uri(@servers.first)
       ret = self.class.post(
         path,
         query: query,
@@ -127,6 +147,50 @@ module PuppetDB
       raise_if_error(ret)
 
       Response.new(ret.parsed_response)
+    end
+
+    def export(filename, opts = {})
+      self.class.base_uri(@servers.first)
+      anonymization_profile = opts.delete(:anonymization_profile) || 'none'
+      path = "/pdb/admin/v#{@admin_api_version}/archive?anonymization_profile=#{anonymization_profile}"
+
+      # Enforce stream_body to avoid using memory
+      params = opts.merge(stream_body: true)
+
+      File.open(filename, 'w') do |file|
+        self.class.get(path, params) do |fragment|
+          if [301, 302].include?(fragment.code)
+            debug 'Skip streaming write for redirect'
+          elsif fragment.code == 200
+            file.write(fragment)
+          else
+            raise StandardError, "Non-success status code while streaming #{fragment.code}"
+          end
+        end
+      end
+    end
+
+    def import(filename)
+      self.class.base_uri(@servers.first)
+      path = "/pdb/admin/v#{@admin_api_version}/archive"
+      self.class.post(path, body: { archive: File.open(filename) })
+    end
+
+    def status
+      status_endpoint = '/status/v1/services'
+      status_map = {}
+
+      @servers.each do |server|
+        self.class.base_uri(server)
+        ret = self.class.get(status_endpoint)
+
+        status_map[server] = if ret.code >= 400
+                               { error: "Unable to build JSON object from server: #{server}" }
+                             else
+                               ret.parsed_response
+                             end
+      end
+      status_map
     end
   end
 end

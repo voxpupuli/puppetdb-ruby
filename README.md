@@ -43,18 +43,26 @@ client = PuppetDB::Client.new({:server => 'http://localhost:8080'})
 SSL with cert-based authentication:
 ``` ruby
 client = PuppetDB::Client.new({
-    :server => 'https://localhost:8081',
-    :pem    => {
-        'key'     => "keyfile",
-        'cert'    => "certfile",
-        'ca_file' => "cafile"
-    }})
+    server_urls: 'https://localhost:8081',
+    cacert: '/path/to/ca.pem'
+    cert: '/path/to/certfile.pem',
+    key: '/path/to/keyfile.pem'
+    })
 ```
 
 SSL with PE RBAC token based authentication:
 ``` ruby
 client = PuppetDB::Client.new({
-    :server => "https://localhost:8081",
+    :server_urls => "https://localhost:8081",
+    :token  => "my_pe_rbac_token",
+    :cacert => "/path/to/cacert.pem",
+    })
+```
+
+Configure connections to multiple PuppetDB's via `server_urls`
+``` ruby
+client = PuppetDB::Client.new({
+    :server_urls => "https://localhost:8081,https://localhost:8083",
     :token  => "my_pe_rbac_token",
     :cacert => "/path/to/cacert.pem",
     })
@@ -97,8 +105,22 @@ client.request uptime.and(redhat)
 client.request uptime.and(debian.or(redhat))
 ```
 
-See the [PuppetDB API Docs](https://puppet.com/docs/puppetdb/latest/api/query/v4/ast.html) for more about the AST based query language.
+If you have configured multiple PuppetDB's via [`server_urls`](https://puppet.com/docs/puppetdb/latest/pdb_client_tools.html#step-3-install-and-configure-the-puppetdb-cli)
+then you can query in `:failover` mode. This will query each PuppetDB in `server_urls`
+in order until it gets a successful response. It will fail with an `APIError` only if all queries fail.
 
+``` ruby
+response = client.request(
+  'nodes',
+  [:"=", "certname", "foo"],
+  {
+    :limit => 10
+    :query_mode => :failover
+  }
+)
+```
+
+See the [PuppetDB API Docs](https://docs.puppet.com/puppetdb/5.0/api/index.html) for more.
 
 #### PQL Queries usage
 
@@ -138,6 +160,60 @@ client.command(
 ```
 
 See the PuppetDB [Commands Endpoint Docs](https://puppet.com/docs/puppetdb/latest/api/command/v1/commands.html) for more information.
+
+#### Query the status endpoint(s)
+
+You can get the status of all configured PuppetDB's by querying the `/status/v1/services` endpoints.
+``` ruby
+client.status
+
+# The result will be of the form (one entry per server)
+# {
+#   "http://localhost:8080": {
+#     "puppetdb-status": {
+#       "service_version": "6.3.1-SNAPSHOT",
+#       "service_status_version": 1,
+#       "detail_level": "info",
+#       "state": "running",
+#       "status": {
+#         "maintenance_mode?": false,
+#         "queue_depth": 0,
+#         "read_db_up?": true,
+#         "write_db_up?": true
+#       },
+#       "active_alerts": [
+#       ]
+#     },
+#     "status-service": {
+#       "service_version": "1.1.0",
+#       "service_status_version": 1,
+#       "detail_level": "info",
+#       "state": "running",
+#       "status": {
+#       },
+#       "active_alerts": [
+#       ]
+#     }
+#   }
+# }
+```
+
+#### Export an archive of PuppetDB
+
+You can [`export`](https://puppet.com/docs/puppetdb/5.1/anonymization.html#using-the-export-command) an archive
+of your PuppetDB to a file. Optionally you can override the `anonymization_profile` (default: none).
+
+``` ruby
+client.export('path/for/new_puppetdb_export.tar.gz', anonymization_profile: :high)
+```
+
+#### Import an archive into PuppetDB
+
+Once you have a PuppetDB export, it can be loaded into PuppetDB with [`import`](https://puppet.com/docs/puppetdb/5.1/anonymization.html#using-the-import-command).
+
+``` ruby
+client.import('path/to/existing_puppetdb_export.tar.gz')
+```
 
 ## Tests
 

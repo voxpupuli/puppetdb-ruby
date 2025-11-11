@@ -1,5 +1,6 @@
 require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 require File.join(File.dirname(__FILE__), '..', '..', 'lib', 'puppetdb')
+require 'tempfile'
 
 def make_mock_response
   m = mock
@@ -21,7 +22,7 @@ def expect_include_total(mock_query)
 end
 
 describe 'raise_if_error' do
-  settings = { 'server' => 'http://localhost:8080' }
+  settings = { server_urls: ['http://localhost:8080'] }
 
   it 'works with 4xx' do
     response = mock
@@ -70,7 +71,7 @@ describe 'SSL support' do
   describe 'when http:// is specified' do
     it 'does not use ssl' do
       settings = {
-        'server' => 'http://localhost:8080'
+        server_urls: 'http://localhost:8080'
       }
 
       r = PuppetDB::Client.new(settings)
@@ -81,12 +82,10 @@ describe 'SSL support' do
   describe 'when https:// is specified' do
     it 'uses ssl' do
       settings = {
-        'server' => 'https://localhost:8081',
-        'pem' => {
-          'cert'    => 'foo',
-          'key'     => 'bar',
-          'ca_file' => 'baz'
-        }
+        server_urls: ['https://localhost:8081'],
+        cacert: 'baz',
+        cert: 'foo',
+        key: 'bar'
       }
 
       r = PuppetDB::Client.new(settings)
@@ -95,7 +94,7 @@ describe 'SSL support' do
 
     it 'tolerates lack of pem' do
       settings = {
-        server: 'https://localhost:8081'
+        server_urls: 'https://localhost:8081'
       }
 
       -> { PuppetDB::Client.new(settings) }.should_not raise_error
@@ -103,11 +102,9 @@ describe 'SSL support' do
 
     it 'does not tolerate lack of key' do
       settings = {
-        'server' => 'https://localhost:8081',
-        'pem'    => {
-          'cert' => 'foo',
-          'ca_file' => 'bar'
-        }
+        server_urls: ['https://localhost:8081'],
+        cacert: 'baz',
+        cert: 'foo'
       }
 
       -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
@@ -115,31 +112,27 @@ describe 'SSL support' do
 
     it 'does not tolerate lack of cert' do
       settings = {
-        'server' => 'https://localhost:8081',
-        'pem'    => {
-          'key' => 'foo',
-          'ca_file' => 'bar'
-        }
+        server_urls: ['https://localhost:8081'],
+        cacert: 'baz',
+        key: 'bar'
       }
 
       -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
     end
 
-    it 'does not tolerate lack of ca_file' do
+    it 'tolerates lack of cacert' do
       settings = {
-        'server' => 'https://localhost:8081',
-        'pem'    => {
-          'key' => 'foo',
-          'cert' => 'bar'
-        }
+        server_urls: ['https://localhost:8081'],
+        cert: 'foo',
+        key: 'bar'
       }
 
-      -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
+      -> { PuppetDB::Client.new(settings) }.should_not raise_error
     end
 
     context 'when using token auth' do
       settings = {
-        'server' => 'https://localhost:8081'
+        server_urls: ['https://localhost:8081']
       }
 
       before do
@@ -159,18 +152,13 @@ describe 'SSL support' do
         expect(r.class.headers).to include('X-Authentication' => 'mytoken')
       end
 
-      it 'will set an empty pem' do
-        r = PuppetDB::Client.new(settings)
-        expect(r.class.default_options).to include(pem: {})
-      end
-
       it 'uses the default cacert path' do
         r = PuppetDB::Client.new(settings)
         expect(r.class.default_options).to include(cacert: '/etc/puppetlabs/puppet/ssl/certs/ca.pem')
       end
 
       it 'will use a provided cacert path' do
-        r = PuppetDB::Client.new(settings.merge('cacert' => '/my/ca/path'))
+        r = PuppetDB::Client.new(settings.merge(cacert: '/my/ca/path'))
         expect(r.class.default_options).to include(cacert: '/my/ca/path')
       end
     end
@@ -179,7 +167,7 @@ describe 'SSL support' do
   describe 'when a protocol is missing from config file' do
     it 'raises an exception' do
       settings = {
-        'server' => 'localhost:8080'
+        server_urls: ['localhost:8080']
       }
 
       -> { PuppetDB::Client.new(settings) }.should raise_error(RuntimeError)
@@ -188,7 +176,7 @@ describe 'SSL support' do
 end
 
 describe 'request' do
-  settings = { server: 'http://localhost' }
+  settings = { server_urls: ['http://localhost'] }
 
   it 'works with array instead of Query' do
     client = PuppetDB::Client.new(settings)
@@ -246,6 +234,44 @@ describe 'request' do
 
     client.request('', 'resources{}')
   end
+
+  describe 'failover mode' do
+    it 'returns successful result' do
+      client = PuppetDB::Client.new(server_urls: 'http://localhost:8080,http://localhost:8081')
+
+      mock_response = mock
+      mock_response.expects(:code).at_least_once.returns(200)
+      mock_response.expects(:headers).returns('X-Records' => 0)
+      mock_response.expects(:parsed_response).returns([])
+
+      PuppetDB::Client.expects(:get).returns(mock_response).once.with do |_path, opts|
+        opts == {
+          body: {
+            'query'         => 'resources{}'
+          }
+        }
+      end
+
+      client.request('', 'resources{}', query_mode: :failover)
+    end
+
+    it 'throws APIError if all queries fail' do
+      client = PuppetDB::Client.new(server_urls: 'http://localhost:8080,http://localhost:8081')
+
+      mock_response = mock
+      mock_response.expects(:code).at_least_once.returns(400)
+
+      PuppetDB::Client.expects(:get).returns(mock_response).twice.with do |_path, opts|
+        opts == {
+          body: {
+            'query'         => 'resources{}'
+          }
+        }
+      end
+
+      -> { client.request('', 'resources{}', query_mode: :failover) }.should raise_error(PuppetDB::APIError)
+    end
+  end
 end
 
 describe 'command' do
@@ -274,5 +300,100 @@ describe 'command' do
                          })
     end
     client.command(command, payload, payload_version)
+  end
+end
+
+describe 'status' do
+  settings = { server_urls: 'http://localhost' }
+  two_servers = { server_urls: 'http://localhost:8080,http://localhost:8081' }
+
+  it 'works with one server' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+    mock_response.expects(:code).at_least_once.returns(200)
+    mock_response.expects(:parsed_response).returns(status: 'running')
+
+    PuppetDB::Client.expects(:get).returns(mock_response).once.with do |path, _opts|
+      path == '/status/v1/services'
+    end
+    expect(client.status).to eq('http://localhost' => { status: 'running' })
+  end
+
+  it 'replaces error response with generic message' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+    mock_response.expects(:code).at_least_once.returns(400)
+
+    PuppetDB::Client.expects(:get).returns(mock_response).once.with do |path, _opts|
+      path == '/status/v1/services'
+    end
+    expect(client.status).to eq('http://localhost' => { error: 'Unable to build JSON object from server: http://localhost' })
+  end
+
+  it 'queries and aggregates all server statuses' do
+    client = PuppetDB::Client.new(two_servers)
+
+    mock_response = mock
+    mock_response.expects(:code).at_least_once.returns(200)
+    mock_response.expects(:parsed_response).twice.returns(status: 'running')
+
+    PuppetDB::Client.expects(:get).returns(mock_response).twice.with do |path, _opts|
+      path == '/status/v1/services'
+    end
+    expect(client.status).to eq(
+      'http://localhost:8080' => { status: 'running' },
+      'http://localhost:8081' => { status: 'running' }
+    )
+  end
+end
+
+describe 'import' do
+  settings = { server: 'http://localhost' }
+
+  it 'send a multipart POST of the tar' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+
+    mock_file = mock
+    File.expects(:open).with('exported_pdb_data.tar.gz').returns(mock_file)
+
+    PuppetDB::Client.expects(:post).returns(mock_response).once.with do |path, opts|
+      path == '/pdb/admin/v1/archive' &&
+        opts[:body][:archive] == mock_file
+    end
+    client.import 'exported_pdb_data.tar.gz'
+  end
+end
+
+describe 'export' do
+  settings = { server: 'http://localhost' }
+
+  it 'streams body to a file' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+    file = Tempfile.new 'export_pdb_data.tar.gz'
+
+    PuppetDB::Client.expects(:get).returns(mock_response).once.with do |path, opts|
+      path == '/pdb/admin/v1/archive?anonymization_profile=none' &&
+        opts[:stream_body] == true
+    end
+    client.export file.path
+  end
+
+  it 'allows customizing the anonymization profile' do
+    client = PuppetDB::Client.new(settings)
+
+    mock_response = mock
+    file = Tempfile.new 'export_pdb_data.tar.gz'
+
+    PuppetDB::Client.expects(:get).returns(mock_response).once.with do |path, opts|
+      path == '/pdb/admin/v1/archive?anonymization_profile=full' &&
+        opts[:stream_body] == true
+    end
+    client.export(file.path, anonymization_profile: :full)
   end
 end

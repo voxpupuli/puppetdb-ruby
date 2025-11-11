@@ -1,19 +1,36 @@
 require 'json'
+require 'rbconfig'
 
 class PuppetDB::Config
   def initialize(overrides = nil, load_files = false)
     @overrides = {}
-    overrides.each { |k, v| @overrides[k.to_s] = v } unless overrides.nil?
+    overrides.each { |k, v| @overrides[k.to_sym] = v } unless overrides.nil?
 
     @load_files = load_files
   end
 
+  def windows?
+    @is_windows ||= (RbConfig::CONFIG['host_os'] =~ %r{mswin|mingw|cygwin})
+    @is_windows
+  end
+
   def load_file(path)
-    File.open(path) { |f| JSON.parse(f.read)['puppetdb'] }
+    loaded_conf = File.open(path) { |f| JSON.parse(f.read, symbolize_names: true)[:puppetdb] }
+
+    # Munge token-file into token_file for better readability in Ruby
+    if loaded_conf[:'token-file']
+      loaded_conf[:token_file] = loaded_conf.delete(:'token-file')
+    end
+
+    loaded_conf
   end
 
   def puppetlabs_root
-    '/etc/puppetlabs'
+    if windows?
+      'C:\ProgramData\PuppetLabs'
+    else
+      '/etc/puppetlabs'
+    end
   end
 
   def global_conf
@@ -29,13 +46,13 @@ class PuppetDB::Config
   end
 
   def default_cacert
-    "#{puppetlabs_root}/puppet/ssl/certs/ca.pem"
+    File.join(puppetlabs_root, 'puppet', 'ssl', 'certs', 'ca.pem')
   end
 
   def defaults
     {
-      'cacert' => default_cacert,
-      'token-file' => File.join(user_root, 'token')
+      cacert: default_cacert,
+      token_file: File.join(user_root, 'token')
     }
   end
 
@@ -46,8 +63,8 @@ class PuppetDB::Config
         config = config.merge(load_file(global_conf))
       end
 
-      if @overrides['config-file']
-        config = config.merge(load_file(@overrides['config-file']))
+      if @overrides[:config_file]
+        config = config.merge(load_file(@overrides[:config_file]))
       elsif File.readable?(user_conf)
         config = config.merge(load_file(user_conf))
       end
@@ -61,10 +78,10 @@ class PuppetDB::Config
   end
 
   def load_token
-    if @config.include?('token')
-      @config['token']
-    elsif File.readable?(config['token-file'])
-      File.read(config['token-file']).strip
+    if @config.include?(:token)
+      @config[:token]
+    elsif File.readable?(config[:token_file])
+      File.read(config[:token_file]).strip
     end
   end
 
@@ -73,12 +90,12 @@ class PuppetDB::Config
   end
 
   def server_urls
-    return [config['server']] unless config['server'].nil?
-    config['server_urls'] || []
+    return config[:server_urls].split(',') if config[:server_urls].is_a?(String)
+    config[:server_urls] || []
   end
 
-  def server
-    server_urls.first || {}
+  def pem
+    @config.select { |k, _| [:cacert, :cert, :key].include?(k) }
   end
 
   def [](key)
